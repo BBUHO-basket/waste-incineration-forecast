@@ -1,0 +1,4 @@
+﻿scenario,description,price_krw_per_tco2,base_product,base_date
+low,기준가격의 80%,16624,KAU25,2026-06-22
+base,KAU25 최신 거래 가중평균,20780,KAU25,2026-06-22
+high,기준가격의 120%,24936,KAU25,2026-06-22

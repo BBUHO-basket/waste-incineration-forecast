@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{% if post %}글 수정{% else %}글쓰기{% endif %} | {{ board_type_name }}{% endblock %}
+
+{% block body %}
+{% include "navbar.html" %}
+
+<main id="main">
+  <section id="breadcrumbs" class="breadcrumbs">
+    <div class="container">
+      <div class="d-flex justify-content-between align-items-center">
+        <h4>{{ board_type_name }}</h4>
+        <ol>
+          <li><a href="/">홈</a></li>
+          <li><a href="/{{ board_type }}">{{ board_type_name }}</a></li>
+          <li>{% if post %}수정{% else %}글쓰기{% endif %}</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding:48px 0 64px;">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+
+          <div class="p-card">
+            <div style="margin-bottom:24px;">
+              <p style="font-size:.75em; font-weight:700; color:var(--g500); text-transform:uppercase; letter-spacing:.1em; margin-bottom:4px;">{{ board_type_name }}</p>
+              <h3 style="font-size:1.35em; font-weight:800; color:var(--tx1); margin:0;">{% if post %}글 수정{% else %}새 글 작성{% endif %}</h3>
+            </div>
+
+            <form method="POST" action="/{{ board_type }}/{% if post %}update{% else %}insert{% endif %}">
+              {% csrf_token %}
+              {% if post %}<input type="hidden" name="b_no" value="{{ post.b_no }}">{% endif %}
+
+              <div style="margin-bottom:18px;">
+                <label style="font-size:.82em; font-weight:700; color:var(--tx2); text-transform:uppercase; letter-spacing:.06em; margin-bottom:8px; display:block;">제목</label>
+                <input type="text" name="b_title" class="form-control form-control-lg"
+                       value="{% if post %}{{ post.b_title }}{% endif %}"
+                       placeholder="제목을 입력하세요." required
+                       style="font-size:.95em; font-weight:600;">
+              </div>
+
+              <div style="margin-bottom:24px;">
+                <label style="font-size:.82em; font-weight:700; color:var(--tx2); text-transform:uppercase; letter-spacing:.06em; margin-bottom:8px; display:block;">내용</label>
+                <textarea name="b_note" class="form-control" rows="14"
+                          placeholder="내용을 입력하세요." required
+                          style="resize:vertical; line-height:1.7;">{% if post %}{{ post.b_note }}{% endif %}</textarea>
+              </div>
+
+              <div style="display:flex; justify-content:flex-end; gap:10px;">
+                <button type="button" class="btn btn-outline-secondary"
+                        onclick="location.href='/{{ board_type }}'">취소</button>
+                <button type="submit" class="btn btn-success" style="padding:10px 32px;">
+                  {% if post %}수정 완료{% else %}등록{% endif %}
+                </button>
+              </div>
+            </form>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+{% include "footer.html" %}
+{% endblock %}

@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ board_type_name }} | 탄소관리 플랫폼{% endblock %}
+
+{% block body %}
+{% include "navbar.html" %}
+
+<main id="main">
+  <section id="breadcrumbs" class="breadcrumbs">
+    <div class="container">
+      <div class="d-flex justify-content-between align-items-center">
+        <h4>{{ board_type_name }}</h4>
+        <ol><li><a href="/">홈</a></li><li>{{ board_type_name }}</li></ol>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding:48px 0 64px;">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-9">
+
+          <div class="p-card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+              <div>
+                <p style="font-size:.75em; font-weight:700; color:var(--g500); text-transform:uppercase; letter-spacing:.1em; margin-bottom:4px;">게시판</p>
+                <h3 style="font-size:1.35em; font-weight:800; color:var(--tx1); margin:0;">{{ board_type_name }}</h3>
+              </div>
+              {% if board_type == 'notice' and member_role == 'admin' %}
+              <a href="/notice/write" class="btn btn-success" style="padding:9px 22px;">+ 글쓰기</a>
+              {% elif board_type != 'notice' and member_no %}
+              <a href="/{{ board_type }}/write" class="btn btn-success" style="padding:9px 22px;">+ 글쓰기</a>
+              {% endif %}
+            </div>
+
+            <div style="height:1px; background:var(--border); margin-bottom:0;"></div>
+
+            {% if not posts %}
+            <div style="text-align:center; padding:48px 0; color:var(--tx3);">
+              <p style="font-size:2em; margin-bottom:8px;">📭</p>
+              등록된 게시물이 없습니다.
+            </div>
+            {% else %}
+            <table class="table table-hover mb-0">
+              <thead>
+                <tr>
+                  <th style="width:7%; text-align:center;">번호</th>
+                  <th>제목</th>
+                  <th style="width:14%; text-align:center;">작성자</th>
+                  <th style="width:13%; text-align:center;">날짜</th>
+                  <th style="width:6%; text-align:center;">조회</th>
+                  <th style="width:4%;"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for post in posts %}
+                <tr>
+                  <td style="text-align:center; color:var(--tx3); font-size:.85em;">{{ post.b_no }}</td>
+                  <td>
+                    <a href="/{{ board_type }}/view?b_no={{ post.b_no }}"
+                       style="color:var(--tx1); font-weight:600; text-decoration:none;">
+                      {{ post.b_title }}
+                    </a>
+                  </td>
+                  <td style="text-align:center; font-size:.85em; color:var(--tx2);">{{ post.b_writer }}</td>
+                  <td style="text-align:center; font-size:.82em; color:var(--tx3);">{{ post.b_date|date:"Y-m-d" }}</td>
+                  <td style="text-align:center; font-size:.82em; color:var(--tx3);">{{ post.b_count }}</td>
+                  <td>
+                    {% if member_name == post.b_writer or member_role == 'admin' %}
+                    <a href="/{{ board_type }}/delete?b_no={{ post.b_no }}"
+                       onclick="return confirm('삭제하시겠습니까?')"
+                       style="font-size:.75em; color:var(--no); text-decoration:none;">삭제</a>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+            {% endif %}
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+{% include "footer.html" %}
+{% endblock %}

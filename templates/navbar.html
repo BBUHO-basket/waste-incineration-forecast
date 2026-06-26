@@ -1,0 +1,53 @@
+  <!-- ======= Header ======= -->
+  <header id="header" class="fixed-top d-flex align-items-center">
+    <div class="container d-flex align-items-center">
+
+      <div class="logo mr-auto">
+        <h1 class="text-light">
+          <a href="/"><span>🗑️ 서울 자원회수시설 탄소관리 플랫폼</span></a>
+        </h1>
+      </div>
+
+      <nav class="nav-menu d-none d-lg-block">
+        <ul>
+          <li><a href="/">홈</a></li>
+
+          <li class="drop-down"><a href="/notice">게시판</a>
+            <ul>
+              <li><a href="/notice">공지사항</a></li>
+              <li><a href="/community">커뮤니티</a></li>
+              <li><a href="/qna">Q&amp;A</a></li>
+            </ul>
+          </li>
+
+          <li class="drop-down"><a href="/predict_incoming/">예측·분석</a>
+            <ul>
+              <li><a href="/predict_incoming/">📊 반입량·소각량 예측</a></li>
+              <li><a href="/mac/">💹 한계감축비용(MAC) 분석</a></li>
+            </ul>
+          </li>
+
+          <li class="drop-down">
+            {% if member_no == None %}
+              <a href="">(로그인 필요)</a>
+            {% else %}
+              <a href="">{{ member_name }}</a>
+            {% endif %}
+            <ul>
+              {% if member_no == None %}
+              <li><a href="/member_register">회원가입</a></li>
+              {% else %}
+              <li><a href="/member_edit">내 정보 수정</a></li>
+              <li><a href="/member_logout">로그아웃</a></li>
+              {% endif %}
+            </ul>
+          </li>
+
+          {% if member_no == None %}
+          <li class="get-started"><a href="/member_register">회원가입</a></li>
+          {% endif %}
+        </ul>
+      </nav>
+
+    </div>
+  </header><!-- End Header -->

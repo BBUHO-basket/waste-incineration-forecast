@@ -1,0 +1,406 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}반입량·소각량 예측 | 탄소관리 플랫폼{% endblock %}
+
+{% block body %}
+{% include "navbar.html" %}
+
+<main id="main">
+  <!-- 브레드크럼 -->
+  <section id="breadcrumbs" class="breadcrumbs">
+    <div class="container">
+      <div class="d-flex justify-content-between align-items-center">
+        <h4>반입량 · 소각량 예측</h4>
+        <ol><li><a href="/">홈</a></li><li>반입량 예측</li></ol>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding: 48px 0 64px;">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-7">
+
+          {% if error %}
+          <div class="alert alert-danger" style="margin-bottom:20px;">{{ error }}</div>
+          {% endif %}
+
+          <!-- ────────────────────────────────────
+               STEP 1: 시설 · 연도 · 월 선택
+          ──────────────────────────────────── -->
+          {% if not show_rate_input and not pred_incoming %}
+          <div class="p-card" data-aos="fade-up">
+
+            <div style="margin-bottom:28px;">
+              <span style="font-size:.75em; font-weight:700; color:var(--g500); text-transform:uppercase; letter-spacing:.1em;">Step 1</span>
+              <h3 style="font-size:1.35em; font-weight:800; color:var(--tx1); margin:6px 0 4px;">시설 및 예측 기간 선택</h3>
+              <p style="font-size:.85em; color:var(--tx3); margin:0;">자원회수시설과 예측할 연도·월을 입력하세요.</p>
+            </div>
+
+            <form method="POST" action="/predict_incoming/">
+              {% csrf_token %}
+              <input type="hidden" name="step" value="1">
+
+              <label style="font-size:.82em; font-weight:700; color:var(--tx2); text-transform:uppercase; letter-spacing:.07em; margin-bottom:12px; display:block;">자원회수시설</label>
+              <div class="row" style="margin-bottom:24px;">
+                {% for fac in facilities %}
+                <div class="col-6" style="margin-bottom:10px;">
+                  <label class="radio-card" style="margin:0; width:100%;">
+                    <input type="radio" name="facility" value="{{ fac }}">
+                    <span>{{ fac }}</span>
+                  </label>
+                </div>
+                {% endfor %}
+              </div>
+
+              <div style="height:1px; background:var(--border); margin-bottom:24px;"></div>
+
+              <div class="row">
+                <div class="col-6">
+                  <label style="font-size:.82em; font-weight:700; color:var(--tx2); text-transform:uppercase; letter-spacing:.07em; margin-bottom:8px; display:block;">예측 연도</label>
+                  <input type="number" name="target_year" class="form-control form-control-lg"
+                         placeholder="예) 2027" min="2015" max="2035" required
+                         style="font-size:1em; font-weight:600;">
+                </div>
+                <div class="col-6">
+                  <label style="font-size:.82em; font-weight:700; color:var(--tx2); text-transform:uppercase; letter-spacing:.07em; margin-bottom:8px; display:block;">예측 월</label>
+                  <select name="target_month" class="form-control form-control-lg" required
+                          style="font-size:1em; font-weight:600;">
+                    <option value="">월 선택</option>
+                    {% for m in months %}
+                    <option value="{{ m }}">{{ m }}월</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+
+              <div class="text-center" style="margin-top:28px;">
+                <button type="submit" class="btn btn-success btn-lg" style="padding:13px 60px; font-size:1em;">
+                  다음 단계 →
+                </button>
+              </div>
+            </form>
+          </div>
+          {% endif %}
+
+          <!-- ────────────────────────────────────
+               STEP 2: 소각비율 확인
+          ──────────────────────────────────── -->
+          {% if show_rate_input %}
+          <div class="p-card" data-aos="fade-up">
+
+            <div style="margin-bottom:24px;">
+              <span style="font-size:.75em; font-weight:700; color:var(--g500); text-transform:uppercase; letter-spacing:.1em;">Step 2</span>
+              <h3 style="font-size:1.35em; font-weight:800; color:var(--tx1); margin:6px 0 4px;">소각비율 확인</h3>
+              <p style="font-size:.85em; color:var(--tx3); margin:0;">
+                <strong style="color:var(--tx1);">{{ sel_facility }} 자원회수시설</strong>
+                &nbsp;|&nbsp; {{ sel_target_year }}년 {{ sel_target_month }}월
+              </p>
+            </div>
+
+            <form method="POST" action="/predict_incoming/">
+              {% csrf_token %}
+              <input type="hidden" name="step" value="2">
+              <input type="hidden" name="facility" value="{{ sel_facility }}">
+              <input type="hidden" name="target_year" value="{{ sel_target_year }}">
+              <input type="hidden" name="target_month" value="{{ sel_target_month }}">
+
+              <!-- 자동 계산 평균 -->
+              <label style="font-size:.82em; font-weight:700; color:var(--tx2); text-transform:uppercase; letter-spacing:.07em; margin-bottom:10px; display:block;">과거 동월 소각비율 평균 (자동 계산)</label>
+              {% if auto_avg_rate %}
+              <div style="background:var(--ok-bg); border:1px solid var(--g200); border-radius:var(--r-md); padding:18px 20px; margin-bottom:20px; display:flex; align-items:center; gap:16px;">
+                <div>
+                  <span style="font-size:2em; font-weight:900; color:var(--ok);">{{ auto_avg_rate }}%</span>
+                </div>
+                <div>
+                  <p style="font-size:.8em; color:var(--tx2); margin:0;">
+                    {{ past_years|first }} ~ {{ past_years|last }}년 {{ sel_target_month }}월 실데이터 평균
+                  </p>
+                </div>
+              </div>
+              {% else %}
+              <div style="background:var(--warn-bg); border:1px solid #f0c07a; border-radius:var(--r-md); padding:14px 18px; margin-bottom:20px;">
+                <span style="color:var(--warn-tx); font-size:.88em;">CSV에서 유효한 과거 데이터를 찾을 수 없습니다.</span>
+              </div>
+              {% endif %}
+
+              <!-- 직전 연도 추가 입력 -->
+              {% if need_extra %}
+              <div style="background:var(--warn-bg); border:1px solid #f0c07a; border-radius:var(--r-md); padding:18px 20px; margin-bottom:20px;">
+                <p style="font-size:.85em; color:var(--warn-tx); margin-bottom:12px; font-weight:600;">
+                  {{ missing_year }}년 {{ missing_month }}월 실제 소각비율이 없습니다
+                </p>
+                <p style="font-size:.82em; color:var(--tx2); margin-bottom:12px;">
+                  해당 값을 입력하면 평균에 포함되어 더 정확한 결과를 얻을 수 있습니다.
+                </p>
+                <div class="input-group" style="max-width:240px;">
+                  <input type="number" step="0.01" name="extra_rate_pct"
+                         class="form-control"
+                         placeholder="{{ missing_year }}년 {{ missing_month }}월 소각비율 (%)">
+                  <div class="input-group-append">
+                    <span class="input-group-text" style="border-radius:0 var(--r-sm) var(--r-sm) 0; background:var(--sf2); border-color:var(--border);">%</span>
+                  </div>
+                </div>
+                <small style="color:var(--tx3); display:block; margin-top:8px; font-size:.78em;">
+                  비워두면 기존 평균({{ auto_avg_rate }}%)을 그대로 사용합니다.
+                </small>
+              </div>
+              {% endif %}
+
+              <div class="d-flex justify-content-between align-items-center" style="margin-top:8px;">
+                <a href="/predict_incoming/" class="btn btn-outline-secondary" style="color:var(--tx2); border-color:var(--border);">
+                  ← 다시 선택
+                </a>
+                <button type="submit" class="btn btn-success btn-lg" style="padding:12px 48px;">
+                  예측하기
+                </button>
+              </div>
+            </form>
+          </div>
+          {% endif %}
+
+          <!-- ────────────────────────────────────
+               STEP 3: 예측 결과
+          ──────────────────────────────────── -->
+          {% if pred_incoming %}
+          <div data-aos="fade-up">
+
+            <!-- 시설 헤더 -->
+            <div style="text-align:center; margin-bottom:28px;">
+              <span style="font-size:.75em; font-weight:700; color:var(--g500); text-transform:uppercase; letter-spacing:.1em;">예측 결과</span>
+              <h3 style="font-size:1.35em; font-weight:800; color:var(--tx1); margin:6px 0 4px;">
+                {{ sel_facility }} 자원회수시설
+              </h3>
+              <p style="font-size:.88em; color:var(--tx3);">{{ sel_target_year }}년 {{ sel_target_month }}월</p>
+            </div>
+
+            <!-- 반입량 / 소각비율 / 소각량 카드 행 -->
+            <div class="row" style="margin-bottom:12px;">
+              <div class="col-4">
+                <div class="p-card text-center" style="padding:22px 12px;">
+                  <p style="font-size:.75em; color:var(--tx3); text-transform:uppercase; letter-spacing:.06em; margin-bottom:8px;">예상 반입량</p>
+                  <div class="big-num" style="font-size:2em; color:var(--ok);">{{ pred_incoming|floatformat:0 }}</div>
+                  <p style="font-size:.75em; color:var(--tx3); margin-top:4px;">톤</p>
+                </div>
+              </div>
+              <div class="col-4">
+                <div class="p-card text-center" style="padding:22px 12px;">
+                  <p style="font-size:.75em; color:var(--tx3); text-transform:uppercase; letter-spacing:.06em; margin-bottom:8px;">소각비율</p>
+                  <div class="big-num" style="font-size:2em; color:var(--teal);">{{ pred_rate|floatformat:2 }}</div>
+                  <p style="font-size:.75em; color:var(--tx3); margin-top:4px;">% (동월 평균)</p>
+                </div>
+              </div>
+              <div class="col-4">
+                <div class="p-card text-center" style="padding:22px 12px;">
+                  <p style="font-size:.75em; color:var(--tx3); text-transform:uppercase; letter-spacing:.06em; margin-bottom:8px;">예상 소각량</p>
+                  <div class="big-num" style="font-size:2em; color:var(--warn);">{{ pred_incineration|floatformat:0 }}</div>
+                  <p style="font-size:.75em; color:var(--tx3); margin-top:4px;">톤</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- CO₂ 배출량 카드 -->
+            <div class="p-card text-center" style="margin-bottom:12px; background:var(--pur-bg); border-color:#d6cff0;">
+              <p style="font-size:.75em; color:var(--pur); text-transform:uppercase; letter-spacing:.08em; margin-bottom:8px;">예상 CO₂ 배출량</p>
+              <div class="big-num" style="font-size:2.8em; color:var(--pur);">{{ pred_co2|floatformat:0 }}</div>
+              <p style="font-size:.78em; color:var(--pur); opacity:.8; margin-top:6px; margin-bottom:0;">tCO₂</p>
+              <p style="font-size:.72em; color:var(--tx3); margin-top:6px; margin-bottom:0;">
+                배출계수 {{ co2_factor }} tCO₂/ton &nbsp;·&nbsp; DM평균 × CF평균 × 44/12 &nbsp;·&nbsp; 2024 국가 승인
+              </p>
+            </div>
+
+            <!-- 탄소배출 허용량 비교 -->
+            {% if monthly_allowance %}
+            <div class="p-card" style="margin-bottom:12px;">
+              <p style="font-size:.82em; font-weight:700; color:var(--tx2); margin-bottom:16px; text-transform:uppercase; letter-spacing:.06em;">탄소배출 허용량 비교 ({{ sel_target_year }}년)</p>
+
+              <!-- 서울시 → 시설 배분 요약 -->
+              <div style="background:var(--sf2); border-radius:var(--r-md); padding:14px 16px; margin-bottom:14px;">
+                <div class="row text-center" style="font-size:.85em;">
+                  <div class="col-4">
+                    <p style="color:var(--tx3); margin-bottom:4px; font-size:.75em;">서울시 연간 허용량</p>
+                    <strong style="color:var(--tx1);">{{ annual_total_allowance|floatformat:0 }}</strong>
+                    <span style="color:var(--tx3); font-size:.78em;"> tCO₂/년</span>
+                  </div>
+                  <div class="col-4">
+                    <p style="color:var(--tx3); margin-bottom:4px; font-size:.75em;">{{ sel_facility }} 점유율</p>
+                    <strong style="color:var(--tx1);">{{ fac_share_pct }}%</strong>
+                    <span style="color:var(--tx3); font-size:.78em;"> (소각량 기준)</span>
+                  </div>
+                  <div class="col-4">
+                    <p style="color:var(--tx3); margin-bottom:4px; font-size:.75em;">월 배출허용량</p>
+                    <strong style="color:var(--teal);">{{ monthly_allowance|floatformat:0 }}</strong>
+                    <span style="color:var(--tx3); font-size:.78em;"> tCO₂/월</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- CO2 vs 허용량 비교 -->
+              <div style="border:2px solid {% if co2_over %}var(--no){% else %}var(--ok){% endif %}; border-radius:var(--r-md); padding:16px; background:{% if co2_over %}var(--no-bg){% else %}var(--ok-bg){% endif %};">
+                <div class="row align-items-center text-center">
+                  <div class="col-5">
+                    <p style="font-size:.72em; color:var(--tx3); margin-bottom:4px;">예측 CO₂</p>
+                    <strong style="color:var(--pur); font-size:1.15em;">{{ pred_co2|floatformat:0 }} tCO₂</strong>
+                  </div>
+                  <div class="col-2" style="color:var(--tx3); font-size:1.1em; font-weight:300;">vs</div>
+                  <div class="col-5">
+                    <p style="font-size:.72em; color:var(--tx3); margin-bottom:4px;">월 허용량</p>
+                    <strong style="color:var(--teal); font-size:1.15em;">{{ monthly_allowance|floatformat:0 }} tCO₂</strong>
+                  </div>
+                </div>
+                <div style="text-align:center; margin-top:12px; font-weight:700; font-size:.92em;
+                            color:{% if co2_over %}var(--no-tx){% else %}var(--ok-tx){% endif %};">
+                  {% if co2_over %}▲ 허용량 초과 &nbsp; +{{ co2_diff|floatformat:0 }} tCO₂
+                  {% else %}▼ 허용량 여유 &nbsp; {{ co2_diff|floatformat:0 }} tCO₂
+                  {% endif %}
+                </div>
+              </div>
+
+              <!-- 시설별 소각량 비율 -->
+              <div style="margin-top:14px;">
+                <p style="font-size:.75em; color:var(--tx3); margin-bottom:8px; text-transform:uppercase; letter-spacing:.06em;">{{ sel_target_year }}년 시설별 연간 소각량 추정</p>
+                {% for row in fac_incin_breakdown %}
+                <div style="display:flex; justify-content:space-between; align-items:center;
+                            padding:7px 0; border-bottom:1px solid var(--border); font-size:.85em;">
+                  <span style="font-weight:{% if row.name == sel_facility %}700{% else %}500{% endif %}; color:{% if row.name == sel_facility %}var(--tx1){% else %}var(--tx2){% endif %};">
+                    {{ row.name }}
+                  </span>
+                  <span style="display:flex; align-items:center; gap:8px;">
+                    <span style="color:var(--tx2);">{{ row.annual_incin|floatformat:0 }} 톤</span>
+                    <span style="background:var(--sf3); color:var(--tx2); border-radius:50px; padding:2px 10px; font-size:.78em; font-weight:600;">{{ row.share_pct }}%</span>
+                  </span>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+            {% endif %}
+
+            <!-- 순차 예측 단계 (있을 때만) -->
+            {% if steps %}
+            <div class="p-card" style="margin-bottom:12px; background:var(--warn-bg); border-color:#f0c07a;">
+              <p style="font-size:.8em; font-weight:700; color:var(--warn-tx); margin-bottom:8px;">※ 실데이터 없는 구간 — 순차 예측으로 보완</p>
+              {% for s in steps %}
+              <div style="font-size:.82em; color:var(--tx2); padding:3px 0; border-bottom:1px solid #f0d8aa;">{{ s }}</div>
+              {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- MAC 연계 분석 -->
+            {% if mac %}
+            <div class="p-card" style="margin-bottom:12px;">
+              <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px;">
+                <div>
+                  <p style="font-size:.75em; font-weight:700; color:var(--g500); text-transform:uppercase; letter-spacing:.1em; margin-bottom:4px;">MAC 연계 분석</p>
+                  <p style="font-size:.88em; font-weight:700; color:var(--tx1); margin:0;">{{ sel_facility }} 한계감축비용</p>
+                </div>
+                <span class="{% if mac.is_sell %}badge-ok{% else %}badge-no{% endif %}">
+                  {{ mac.mac }} 원/tCO₂
+                </span>
+              </div>
+
+              <!-- MAC 바 -->
+              <div class="mac-bar-wrap" style="margin-bottom:6px;">
+                <div class="mac-bar-fill" style="width:{{ mac.mac_bar_pct }}%;
+                  background:{% if mac.is_sell %}rgba(60,186,113,.25){% else %}rgba(224,92,122,.25){% endif %};"></div>
+                <div class="mac-bar-line" style="left:{{ mac.cp_bar_pct }}%; background:var(--warn);"></div>
+              </div>
+              <div style="display:flex; justify-content:space-between; font-size:.72em; color:var(--tx3); margin-bottom:16px;">
+                <span>15,000원</span>
+                <span style="color:var(--warn);">▲ 시장가 20,780원</span>
+                <span>30,000원</span>
+              </div>
+
+              <!-- 에너지 효율 -->
+              <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; text-align:center; font-size:.82em;">
+                <div style="background:var(--sf2); border-radius:var(--r-sm); padding:10px 6px;">
+                  <p style="color:var(--tx3); margin-bottom:4px; font-size:.8em;">전력 사용</p>
+                  <strong style="color:var(--tx1);">{{ mac.elec_per_ton }}</strong>
+                  <p style="color:var(--tx3); margin:2px 0 0; font-size:.8em;">kWh/ton</p>
+                </div>
+                <div style="background:var(--sf2); border-radius:var(--r-sm); padding:10px 6px;">
+                  <p style="color:var(--tx3); margin-bottom:4px; font-size:.8em;">LNG 사용</p>
+                  <strong style="color:var(--tx1);">{{ mac.lng_per_ton }}</strong>
+                  <p style="color:var(--tx3); margin:2px 0 0; font-size:.8em;">Nm³/ton</p>
+                </div>
+                <div style="background:var(--sf2); border-radius:var(--r-sm); padding:10px 6px;">
+                  <p style="color:var(--tx3); margin-bottom:4px; font-size:.8em;">비효율 점수</p>
+                  <strong style="color:var(--tx1);">{{ mac.ineff_score }}</strong>
+                  <p style="color:var(--tx3); margin:2px 0 0; font-size:.8em;">/ 100점</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- MAC 의사결정 조언 -->
+            {% if mac_advice %}
+            <div class="p-card" style="margin-bottom:12px;
+                 background:{% if mac_advice.type == 'reduce' %}var(--ok-bg){% elif mac_advice.type == 'buy' %}var(--no-bg){% else %}var(--teal-bg){% endif %};
+                 border-color:{% if mac_advice.type == 'reduce' %}var(--ok){% elif mac_advice.type == 'buy' %}var(--no){% else %}var(--teal){% endif %};">
+              <p style="font-weight:800; font-size:.95em; margin-bottom:8px;
+                         color:{% if mac_advice.type == 'reduce' %}var(--ok-tx){% elif mac_advice.type == 'buy' %}var(--no-tx){% else %}var(--teal-tx){% endif %};">
+                {% if mac_advice.type == 'reduce' %}✅ 직접 감축 권장
+                {% elif mac_advice.type == 'buy' %}🛒 배출권 구매 권장
+                {% else %}💰 잉여 배출권 판매 가능{% endif %}
+              </p>
+              <p style="color:var(--tx2); font-size:.88em; margin-bottom:12px;">{{ mac_advice.msg }}</p>
+
+              {% if mac_advice.type == 'reduce' or mac_advice.type == 'buy' %}
+              <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; text-align:center; font-size:.82em;">
+                <div style="background:rgba(255,255,255,.6); border-radius:var(--r-sm); padding:10px;">
+                  <p style="color:var(--tx3); margin-bottom:4px; font-size:.8em;">감축 비용</p>
+                  <strong style="color:{% if mac_advice.type == 'reduce' %}var(--ok-tx){% else %}var(--no-tx){% endif %};">{{ mac_advice.reduce_cost }}</strong>
+                </div>
+                <div style="background:rgba(255,255,255,.6); border-radius:var(--r-sm); padding:10px;">
+                  <p style="color:var(--tx3); margin-bottom:4px; font-size:.8em;">구매 비용</p>
+                  <strong style="color:{% if mac_advice.type == 'buy' %}var(--ok-tx){% else %}var(--no-tx){% endif %};">{{ mac_advice.buy_cost }}</strong>
+                </div>
+                <div style="background:rgba(255,255,255,.6); border-radius:var(--r-sm); padding:10px;">
+                  <p style="color:var(--tx3); margin-bottom:4px; font-size:.8em;">절감액</p>
+                  <strong style="color:var(--pur-tx);">{{ mac_advice.saving }}</strong>
+                </div>
+              </div>
+              {% endif %}
+
+              {% if mac_advice.type == 'surplus' %}
+              <div style="text-align:center;">
+                <p style="color:var(--tx3); font-size:.82em; margin-bottom:4px;">예상 판매 수익</p>
+                <strong style="color:var(--teal-tx); font-size:1.1em;">{{ mac_advice.sell_revenue }}</strong>
+              </div>
+              {% endif %}
+
+              <p style="text-align:center; margin-top:14px; font-size:.73em; color:var(--tx3); margin-bottom:0;">
+                배출권 시장가 20,780원/tCO₂ 기준
+                &nbsp;|&nbsp;
+                <a href="/mac/?year={{ sel_target_year }}&month={{ sel_target_month }}" style="color:var(--g500);">전체 시설 MAC 비교 →</a>
+              </p>
+            </div>
+            {% else %}
+            <div style="text-align:center; padding:8px 0 16px;">
+              <a href="/mac/?year={{ sel_target_year }}&month={{ sel_target_month }}" class="btn btn-outline-success btn-sm">
+                전체 시설 MAC 분석 보기 →
+              </a>
+            </div>
+            {% endif %}
+            {% endif %}
+
+            <!-- 주석 + 다시 예측 -->
+            <p style="text-align:center; color:var(--tx3); font-size:.72em; margin:8px 0 20px;">
+              소각량 = 반입량 × 동월 과거 평균 소각비율 &nbsp;|&nbsp; CO₂ = 소각량 × 배출계수 &nbsp;|&nbsp; 반입량: XGBoost
+            </p>
+            <div style="text-align:center;">
+              <a href="/predict_incoming/" class="btn btn-outline-secondary" style="color:var(--tx2); border-color:var(--border);">
+                다시 예측하기
+              </a>
+            </div>
+
+          </div>
+          {% endif %}
+
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+{% include "footer.html" %}
+{% endblock %}

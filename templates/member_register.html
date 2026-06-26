@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}회원가입 | 탄소관리 플랫폼{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script src="{% static 'js/sha1.js' %}" type="text/javascript"></script>
+<script>
+  function getCookie(n){var v=null;if(document.cookie&&document.cookie!==''){var c=document.cookie.split(';');for(var i=0;i<c.length;i++){var k=c[i].trim();if(k.substring(0,n.length+1)===(n+'=')){v=decodeURIComponent(k.substring(n.length+1));break;}}}return v;}
+  var csrftoken=getCookie('csrftoken');
+  function registerMember(){
+    var id=document.getElementById('member_id').value;
+    if(!id){document.getElementById('member_id').focus();return;}
+    var pw=document.getElementById('member_pwd').value;
+    if(!pw){document.getElementById('member_pwd').focus();return;}
+    var pw2=document.getElementById('member_pwd2').value;
+    if(!pw2){document.getElementById('member_pwd2').focus();return;}
+    if(pw!=pw2){alert('비밀번호 확인이 틀립니다.');document.getElementById('member_pwd2').focus();return;}
+    if(!document.getElementById('warrant_flag').checked){alert('약관에 동의하세요.');return;}
+    if(document.getElementById('idcheck').value!='1'){alert('아이디 중복확인을 하세요.');return;}
+    var name=document.getElementById('member_name').value;
+    var email=document.getElementById('member_email').value;
+    var fac=document.getElementById('member_facility').value;
+    var xhr=new XMLHttpRequest();
+    xhr.onreadystatechange=function(){if(xhr.readyState==4){var o=JSON.parse(xhr.responseText);alert(o.result_msg);if(o.flag=='1')location.href='/';}};
+    xhr.open('GET','/member_insert?member_id='+id+'&member_pwd='+hex_sha1(pw)+'&member_name='+name+'&member_email='+email+'&member_facility='+fac);
+    xhr.setRequestHeader('X-CSRFToken',csrftoken);
+    xhr.send(null);
+  }
+  function checkId(){
+    var id=document.getElementById('member_id').value;
+    if(!id){document.getElementById('member_id').focus();return;}
+    var xhr=new XMLHttpRequest();
+    xhr.onreadystatechange=function(){if(xhr.readyState==4){var o=JSON.parse(xhr.responseText);alert(o.result_msg);if(o.flag=='0'){document.getElementById('idcheck').value='1';document.getElementById('member_id').disabled=true;}}};
+    xhr.open('GET','member_idcheck?member_id='+id);
+    xhr.setRequestHeader('X-CSRFToken',csrftoken);
+    xhr.send(null);
+  }
+</script>
+{% endblock %}
+
+{% block body %}
+{% include "navbar.html" %}
+<input type="hidden" value="0" id="idcheck">
+
+<main id="main">
+  <section id="breadcrumbs" class="breadcrumbs">
+    <div class="container">
+      <div class="d-flex justify-content-between align-items-center">
+        <h4>회원가입</h4>
+        <ol><li><a href="/">홈</a></li><li>회원가입</li></ol>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding:48px 0 64px;">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8">
+
+          <div class="p-card">
+            <div style="margin-bottom:28px;">
+              <p style="font-size:.75em; font-weight:700; color:var(--g500); text-transform:uppercase; letter-spacing:.1em; margin-bottom:6px;">계정 만들기</p>
+              <h3 style="font-size:1.4em; font-weight:800; color:var(--tx1); margin:0;">회원가입</h3>
+            </div>
+
+            <!-- 아이디 -->
+            <div style="margin-bottom:16px;">
+              <label style="font-size:.8em; font-weight:700; color:var(--tx2); text-transform:uppercase; letter-spacing:.06em; margin-bottom:8px; display:block;">아이디 <span style="color:var(--no);">*</span></label>
+              <div style="display:flex; gap:8px;">
+                <input type="text" id="member_id" class="form-control" placeholder="아이디를 입력하세요" style="flex:1;">
+                <button onclick="checkId();" class="btn btn-outline-success" style="white-space:nowrap; padding:10px 18px;">중복확인</button>
+              </div>
+            </div>
+
+            <!-- 비밀번호 -->
+            <div style="margin-bottom:16px;">
+              <label style="font-size:.8em; font-weight:700; color:var(--tx2); text-transform:uppercase; letter-spacing:.06em; margin-bottom:8px; display:block;">비밀번호 <span style="color:var(--no);">*</span></label>
+              <input type="password" id="member_pwd" class="form-control" placeholder="비밀번호" style="margin-bottom:8px;">
+              <input type="password" id="member_pwd2" class="form-control" placeholder="비밀번호 확인">
+            </div>
+
+            <!-- 이름 -->
+            <div style="margin-bottom:16px;">
+              <label style="font-size:.8em; font-weight:700; color:var(--tx2); text-transform:uppercase; letter-spacing:.06em; margin-bottom:8px; display:block;">이름</label>
+              <input type="text" id="member_name" class="form-control" placeholder="이름">
+            </div>
+
+            <!-- 이메일 -->
+            <div style="margin-bottom:16px;">
+              <label style="font-size:.8em; font-weight:700; color:var(--tx2); text-transform:uppercase; letter-spacing:.06em; margin-bottom:8px; display:block;">이메일</label>
+              <input type="email" id="member_email" class="form-control" placeholder="이메일">
+            </div>
+
+            <!-- 담당 시설 -->
+            <div style="margin-bottom:20px;">
+              <label style="font-size:.8em; font-weight:700; color:var(--tx2); text-transform:uppercase; letter-spacing:.06em; margin-bottom:8px; display:block;">담당 시설</label>
+              <select id="member_facility" class="form-control">
+                <option value="">해당없음</option>
+                <option value="강남">강남 자원회수시설</option>
+                <option value="노원">노원 자원회수시설</option>
+                <option value="마포">마포 자원회수시설</option>
+                <option value="양천">양천 자원회수시설</option>
+              </select>
+            </div>
+
+            <!-- 약관 -->
+            <div style="background:var(--sf2); border:1px solid var(--border); border-radius:var(--r-md); padding:14px 16px; margin-bottom:20px; font-size:.83em; color:var(--tx2);">
+              <strong style="color:var(--tx1);">이용약관</strong><br>
+              1. 본 플랫폼은 서울시 자원회수시설 운영자를 위한 탄소관리 도구입니다.<br>
+              2. 수집된 정보는 서비스 제공 목적으로만 사용됩니다.
+            </div>
+            <label style="display:flex; align-items:center; gap:10px; font-size:.88em; color:var(--tx2); cursor:pointer; margin-bottom:24px;">
+              <input type="checkbox" id="warrant_flag" style="accent-color:var(--g500); width:16px; height:16px;">
+              위 약관에 동의합니다
+            </label>
+
+            <button onclick="registerMember();" class="btn btn-success" style="width:100%; padding:13px; font-size:1em;">
+              회원가입 완료
+            </button>
+
+            <p style="text-align:center; margin-top:16px; font-size:.83em; color:var(--tx3);">
+              이미 계정이 있으신가요? <a href="/" style="color:var(--g500); font-weight:700;">로그인</a>
+            </p>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+{% include "footer.html" %}
+{% endblock %}

@@ -1,0 +1,281 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>{% block title %}서울 자원회수시설 탄소관리 플랫폼{% endblock %}</title>
+  <meta content="서울시 자원회수시설 반입량·소각량 예측 및 탄소배출 관리 플랫폼" name="description">
+
+  <!-- Favicons -->
+  <link href="{% static 'assets/img/favicon.png' %}" rel="icon">
+
+  <!-- Fonts: Nunito (부드럽고 둥근 체) -->
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  {% block styles %}
+  <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/icofont/icofont.min.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/remixicon/remixicon.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/boxicons/css/boxicons.min.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/aos/aos.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/css/style.css' %}" rel="stylesheet">
+
+  <style>
+    /* ═══════════════════════════════════════════════════
+       디자인 토큰 (파스텔 그린 팔레트)
+    ═══════════════════════════════════════════════════ */
+    :root {
+      /* 그린 스케일 */
+      --g900: #1b4332;
+      --g700: #2d6a4f;
+      --g500: #52b788;  /* 메인 파스텔 그린 */
+      --g400: #74c69d;
+      --g300: #95d5b2;
+      --g200: #b7e4c7;
+      --g100: #d8f3dc;
+      --g50:  #f0f7f2;
+
+      /* 텍스트 */
+      --tx1: #1b2e20;
+      --tx2: #4a6450;
+      --tx3: #8ba690;
+
+      /* 서피스 */
+      --sf1: #ffffff;
+      --sf2: #f6fcf8;
+      --sf3: #edf7f0;
+      --border: #d4e9da;
+
+      /* 상태색 (파스텔) */
+      --ok:      #3cba71;
+      --ok-bg:   #e8f8ef;
+      --ok-tx:   #1a6b3a;
+      --no:      #e05c7a;
+      --no-bg:   #fdecf0;
+      --no-tx:   #8b1a30;
+      --warn:    #f0a050;
+      --warn-bg: #fef4e8;
+      --warn-tx: #8b5120;
+      --pur:     #9b8ed6;
+      --pur-bg:  #f3f1fb;
+      --pur-tx:  #3d2d8b;
+      --teal:    #4db6c9;
+      --teal-bg: #e8f7fa;
+      --teal-tx: #1a5b6b;
+
+      /* 폰트 */
+      --font: 'Nunito', 'Apple SD Gothic Neo', sans-serif;
+
+      /* 반경 */
+      --r-sm: 10px;
+      --r-md: 16px;
+      --r-lg: 20px;
+      --r-xl: 28px;
+    }
+
+    /* ═══════════════════════════════════════════════════
+       전역 기반
+    ═══════════════════════════════════════════════════ */
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--font);
+      font-size: 15px;
+      color: var(--tx1);
+      background: #fff;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ═══════════════════════════════════════════════════
+       헤더 / 네비
+    ═══════════════════════════════════════════════════ */
+    #header {
+      background: #40916c !important;
+      border-radius: 0 0 50% 50% / 0 0 48px 48px !important;
+      box-shadow: 0 8px 28px rgba(45,106,79,.2);
+      overflow: visible !important;
+    }
+    #header.header-scrolled { background: #40916c !important; border-radius: 0 0 50% 50% / 0 0 48px 48px !important; }
+    #header .logo h1 a,
+    #header .logo h1 a:hover { color: #fff !important; font-family: var(--font); font-weight: 800; }
+    .nav-menu a { color: #e8f5ec !important; font-weight: 600; letter-spacing: .01em; }
+    .nav-menu a:hover,
+    .nav-menu .active > a,
+    .nav-menu li:hover > a { color: #fff !important; }
+    .nav-menu .drop-down ul {
+      border-top: 3px solid var(--g500) !important;
+      border-radius: 0 0 var(--r-md) var(--r-md);
+    }
+    .nav-menu .drop-down ul a { color: var(--tx1) !important; }
+    .nav-menu .drop-down ul a:hover { color: var(--g700) !important; background: var(--g50); }
+    .get-started a {
+      background: var(--g500) !important;
+      border-radius: 50px !important;
+      color: #fff !important;
+      font-weight: 700 !important;
+    }
+    .get-started a:hover { background: var(--g400) !important; }
+
+    /* ═══════════════════════════════════════════════════
+       브레드크럼
+    ═══════════════════════════════════════════════════ */
+    .breadcrumbs {
+      background: var(--sf2) !important;
+      border-bottom: 1px solid var(--border) !important;
+      border-radius: 0 0 50% 50% / 0 0 20px 20px;
+    }
+    .breadcrumbs h4 { color: var(--g700) !important; font-weight: 800; font-family: var(--font); }
+    .breadcrumbs ol li a { color: var(--g500) !important; }
+    .breadcrumbs ol li.active { color: var(--tx2) !important; }
+
+    /* ═══════════════════════════════════════════════════
+       카드 공통 (Bootstrap .card 오버라이드)
+    ═══════════════════════════════════════════════════ */
+    .card {
+      border: 1px solid var(--border) !important;
+      border-radius: var(--r-lg) !important;
+      box-shadow: 0 2px 12px rgba(45,106,79,.06) !important;
+      font-family: var(--font);
+    }
+    .card-header {
+      background: var(--sf2) !important;
+      border-bottom: 1px solid var(--border) !important;
+      border-radius: var(--r-lg) var(--r-lg) 0 0 !important;
+      font-weight: 700;
+      color: var(--tx1);
+    }
+
+    /* ═══════════════════════════════════════════════════
+       버튼
+    ═══════════════════════════════════════════════════ */
+    .btn { border-radius: 50px !important; font-weight: 700 !important; font-family: var(--font) !important; }
+    .btn-success,
+    .btn-success:focus {
+      background: var(--g500) !important;
+      border-color: var(--g500) !important;
+      color: #fff !important;
+    }
+    .btn-success:hover { background: var(--g700) !important; border-color: var(--g700) !important; }
+    .btn-outline-success {
+      border-color: var(--g500) !important;
+      color: var(--g700) !important;
+    }
+    .btn-outline-success:hover {
+      background: var(--g500) !important;
+      color: #fff !important;
+    }
+
+    /* ═══════════════════════════════════════════════════
+       폼 인풋
+    ═══════════════════════════════════════════════════ */
+    .form-control {
+      border-radius: var(--r-sm) !important;
+      border-color: var(--border) !important;
+      font-family: var(--font) !important;
+      color: var(--tx1) !important;
+    }
+    .form-control:focus {
+      border-color: var(--g500) !important;
+      box-shadow: 0 0 0 3px rgba(82,183,136,.15) !important;
+    }
+
+    /* ═══════════════════════════════════════════════════
+       뱃지 / 알림
+    ═══════════════════════════════════════════════════ */
+    .badge-secondary { background: var(--sf3) !important; color: var(--tx2) !important; }
+    .alert-danger { background: var(--no-bg) !important; border-color: var(--no) !important; color: var(--no-tx) !important; border-radius: var(--r-md) !important; }
+
+    /* ═══════════════════════════════════════════════════
+       테이블
+    ═══════════════════════════════════════════════════ */
+    .table { font-family: var(--font); color: var(--tx1); }
+    .table thead th { color: var(--tx2) !important; font-weight: 700; background: var(--sf2) !important; font-size: .82em; letter-spacing: .04em; text-transform: uppercase; }
+    .table-hover tbody tr:hover { background: var(--g50) !important; }
+    .table td, .table th { vertical-align: middle !important; border-color: var(--border) !important; }
+
+    /* ═══════════════════════════════════════════════════
+       섹션 타이틀 (Vesperr 호환)
+    ═══════════════════════════════════════════════════ */
+    .section-title h2::before,
+    .section-title h2::after { background: var(--g500) !important; }
+
+    /* ═══════════════════════════════════════════════════
+       푸터
+    ═══════════════════════════════════════════════════ */
+    footer#footer {
+      background: #40916c !important;
+      color: #d8f3dc !important;
+      border-radius: 50% 50% 0 0 / 48px 48px 0 0 !important;
+      margin-top: 0;
+    }
+    footer#footer a { color: #d8f3dc !important; }
+    footer#footer a:hover { color: #fff !important; }
+    footer#footer .copyright { color: #d8f3dc !important; }
+    .back-to-top i { background: var(--g500) !important; }
+
+    /* ═══════════════════════════════════════════════════
+       유틸리티 클래스 (공통)
+    ═══════════════════════════════════════════════════ */
+    /* 페이지 카드 */
+    .p-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 28px;
+    }
+    /* 파스텔 상태 배지 */
+    .badge-ok   { background: var(--ok-bg);   color: var(--ok-tx);   border-radius: 50px; padding: 5px 14px; font-size: .78em; font-weight: 700; display: inline-block; }
+    .badge-no   { background: var(--no-bg);   color: var(--no-tx);   border-radius: 50px; padding: 5px 14px; font-size: .78em; font-weight: 700; display: inline-block; }
+    .badge-warn { background: var(--warn-bg); color: var(--warn-tx); border-radius: 50px; padding: 5px 14px; font-size: .78em; font-weight: 700; display: inline-block; }
+    .badge-pur  { background: var(--pur-bg);  color: var(--pur-tx);  border-radius: 50px; padding: 5px 14px; font-size: .78em; font-weight: 700; display: inline-block; }
+    .badge-teal { background: var(--teal-bg); color: var(--teal-tx); border-radius: 50px; padding: 5px 14px; font-size: .78em; font-weight: 700; display: inline-block; }
+
+    /* 숫자 강조 */
+    .big-num { font-weight: 900; letter-spacing: -.04em; line-height: 1; }
+
+    /* 파스텔 MAC 바 */
+    .mac-bar-wrap {
+      background: var(--sf3);
+      border-radius: 50px;
+      height: 22px;
+      position: relative;
+      overflow: hidden;
+    }
+    .mac-bar-fill {
+      position: absolute; left: 0; top: 0; height: 100%; border-radius: 50px;
+      transition: width .6s cubic-bezier(.4,0,.2,1);
+    }
+    .mac-bar-line {
+      position: absolute; top: 0; bottom: 0; width: 2px; z-index: 2;
+    }
+
+    /* hr */
+    hr { border-color: var(--border) !important; }
+
+    /* 게시판 등 기타 페이지 메인 배경 */
+    #main { background: var(--sf2); min-height: 60vh; }
+
+    /* 라디오 카드 */
+    .radio-card {
+      display: flex; align-items: center; gap: 10px;
+      padding: 14px 18px;
+      border: 2px solid var(--border);
+      border-radius: var(--r-md);
+      cursor: pointer;
+      transition: border-color .15s, background .15s;
+      background: #fff;
+      font-weight: 600;
+      color: var(--tx1);
+    }
+    .radio-card:hover { border-color: var(--g400); background: var(--g50); }
+    .radio-card input[type=radio]:checked + .radio-card,
+    .radio-card.selected { border-color: var(--g500); background: var(--ok-bg); }
+    .radio-card input[type=radio] { accent-color: var(--g500); }
+  </style>
+  {% endblock %}
+
+  {% block scripts %}{% endblock %}
+</head>
+<body>
+  {% block body %}{% endblock %}

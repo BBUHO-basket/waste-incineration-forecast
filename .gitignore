@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual Environment
+venv/
+.venv/
+.env
+*.env
+
+# VS Code
+.vscode/
+
+# Claude
+.claude/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Django
+db.sqlite3
+*.sqlite3
+local_settings.py
+media/
+staticfiles/
+*.log
+
+# Machine Learning Models (재학습으로 재생성 가능)
+*.pkl
+*.joblib
+
+# Large / Raw Data
+data/raw/
+data/results/
+
+# Large files
+*.zip
+*.tar.gz

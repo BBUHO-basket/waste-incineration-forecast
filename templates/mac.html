@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}MAC 분석 | 탄소관리 플랫폼{% endblock %}
+
+{% block body %}
+{% include "navbar.html" %}
+
+<main id="main">
+  <!-- 브레드크럼 -->
+  <section id="breadcrumbs" class="breadcrumbs">
+    <div class="container">
+      <div class="d-flex justify-content-between align-items-center">
+        <h4>한계감축비용(MAC) 분석</h4>
+        <ol><li><a href="/">홈</a></li><li>MAC 분석</li></ol>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding:48px 0 64px;">
+    <div class="container">
+
+      <!-- ─── 상단: 설명 + 기간 선택 + 배출권 가격 ─── -->
+      <div class="row" style="margin-bottom:28px;" data-aos="fade-up">
+
+        <!-- 설명 카드 -->
+        <div class="col-lg-8" style="margin-bottom:16px;">
+          <div class="p-card" style="height:100%;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px;">
+              <div>
+                <p style="font-size:.75em; font-weight:700; color:var(--g500); text-transform:uppercase; letter-spacing:.1em; margin-bottom:6px;">개념 안내</p>
+                <h5 style="color:var(--tx1); font-weight:800; margin-bottom:10px;">한계감축비용(MAC)이란?</h5>
+                <p style="color:var(--tx2); font-size:.88em; margin:0; line-height:1.7;">
+                  CO₂ 1톤을 추가로 줄이는 데 드는 비용입니다.
+                  <strong style="color:var(--ok-tx);">MAC &lt; 시장가</strong>이면 직접 감축 후 남은 배출권 판매가 유리하고,
+                  <strong style="color:var(--no-tx);">MAC &gt; 시장가</strong>이면 시장에서 배출권 구매가 유리합니다.<br>
+                  <span style="color:var(--tx3); font-size:.88em;">비효율 ↑ → 감축 여지 ↑ → MAC ↓ &nbsp;|&nbsp; 범위: {{ mac_min }}~{{ mac_max }} 원/tCO₂</span>
+                </p>
+              </div>
+
+              <!-- 연도·월 선택 -->
+              <form method="GET" action="/mac/" id="macFilterForm" style="flex-shrink:0;">
+                <p style="font-size:.72em; color:var(--tx3); margin-bottom:6px; text-align:right;">기준 기간</p>
+                <div style="display:flex; gap:6px;">
+                  <select name="year" class="form-control form-control-sm" style="width:90px; font-weight:700;"
+                          onchange="document.getElementById('macFilterForm').submit()">
+                    {% for y in available_years %}
+                    <option value="{{ y }}" {% if y == sel_year %}selected{% endif %}>{{ y }}년</option>
+                    {% endfor %}
+                  </select>
+                  <select name="month" class="form-control form-control-sm" style="width:74px; font-weight:700;"
+                          onchange="document.getElementById('macFilterForm').submit()">
+                    {% for m in months %}
+                    <option value="{{ m }}" {% if m == sel_month %}selected{% endif %}>{{ m }}월</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- 배출권 가격 카드 -->
+        <div class="col-lg-4" style="margin-bottom:16px;">
+          <div class="p-card text-center h-100" style="background:var(--warn-bg); border-color:#f0c07a; display:flex; flex-direction:column; justify-content:center;">
+            <p style="font-size:.75em; font-weight:700; color:var(--warn); text-transform:uppercase; letter-spacing:.1em; margin-bottom:8px;">배출권 시장가격</p>
+            <div class="big-num" style="font-size:2.4em; color:var(--warn);">{{ carbon_price }}</div>
+            <p style="font-size:.8em; color:var(--warn); opacity:.8; margin-top:4px;">원 / tCO₂</p>
+            <div style="margin-top:12px; background:rgba(255,255,255,.5); border-radius:50px; padding:6px 14px; display:inline-block; font-size:.78em; color:var(--warn-tx);">
+              4개 시설 중 <strong>{{ sell_count }}개</strong> 감축 판매 유리
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── 시설별 MAC 카드 2×2 ─── -->
+      <div class="row" data-aos="fade-up">
+        {% for row in rows %}
+        <div class="col-lg-6" style="margin-bottom:20px;">
+          <div class="p-card" style="border-top:3px solid {% if row.is_sell %}var(--ok){% else %}var(--no){% endif %};">
+
+            <!-- 헤더 -->
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px;">
+              <div>
+                <h5 style="margin:0; font-weight:800; color:var(--tx1);">{{ row.facility }}</h5>
+                <p style="font-size:.78em; color:var(--tx3); margin:3px 0 0;">
+                  {{ sel_year }}년 {{ sel_month }}월 소각량
+                  <strong style="color:var(--tx2);">{{ row.monthly_incin }} 톤</strong>
+                  <span style="background:var(--sf3); color:var(--tx3); border-radius:50px; padding:1px 8px; font-size:.82em; margin-left:4px;">{{ row.data_source }}</span>
+                </p>
+              </div>
+              <span class="{% if row.is_sell %}badge-ok{% else %}badge-no{% endif %}">
+                {{ row.decision }}
+              </span>
+            </div>
+
+            <!-- MAC 바 -->
+            <p style="font-size:.72em; color:var(--tx3); margin-bottom:6px; text-transform:uppercase; letter-spacing:.06em;">MAC vs 배출권 시장가격</p>
+            <div class="mac-bar-wrap" style="margin-bottom:4px;">
+              <div class="mac-bar-fill" style="width:{{ row.mac_bar_pct }}%;
+                background:{% if row.is_sell %}rgba(60,186,113,.3){% else %}rgba(224,92,122,.3){% endif %};"></div>
+              <div class="mac-bar-line" style="left:{{ row.cp_bar_pct }}%; background:var(--warn);"></div>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:.72em; color:var(--tx3); margin-bottom:12px;">
+              <span>{{ mac_min }} 원</span>
+              <span style="color:var(--warn); font-weight:700;">▲ {{ carbon_price }}원</span>
+              <span>30,000 원</span>
+            </div>
+
+            <!-- MAC 값 + 차이 -->
+            <div style="background:{% if row.is_sell %}var(--ok-bg){% else %}var(--no-bg){% endif %}; border-radius:var(--r-sm); padding:10px 14px; margin-bottom:14px; font-size:.85em;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-weight:800; font-size:1.05em; color:{% if row.is_sell %}var(--ok-tx){% else %}var(--no-tx){% endif %};">
+                  MAC {{ row.mac }} 원/tCO₂
+                </span>
+                <span style="color:{% if row.is_sell %}var(--ok-tx){% else %}var(--no-tx){% endif %}; font-size:.85em;">
+                  {% if row.is_sell %}▼ {{ row.gap }}원 저렴 → 감축 후 판매{% else %}▲ {{ row.gap }}원 비쌈 → 구매 유리{% endif %}
+                </span>
+              </div>
+            </div>
+
+            <!-- 에너지 효율 상세 -->
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; text-align:center; font-size:.82em;">
+              <div style="background:var(--sf2); border-radius:var(--r-sm); padding:10px 6px;">
+                <p style="color:var(--tx3); margin-bottom:4px; font-size:.78em;">전력</p>
+                <strong style="color:var(--tx1);">{{ row.elec_per_ton }}</strong>
+                <p style="color:var(--tx3); margin:2px 0 0; font-size:.78em;">kWh/ton</p>
+              </div>
+              <div style="background:var(--sf2); border-radius:var(--r-sm); padding:10px 6px;">
+                <p style="color:var(--tx3); margin-bottom:4px; font-size:.78em;">LNG</p>
+                <strong style="color:var(--tx1);">{{ row.lng_per_ton }}</strong>
+                <p style="color:var(--tx3); margin:2px 0 0; font-size:.78em;">Nm³/ton</p>
+              </div>
+              <div style="background:var(--sf2); border-radius:var(--r-sm); padding:10px 6px;">
+                <p style="color:var(--tx3); margin-bottom:4px; font-size:.78em;">비효율 점수</p>
+                <strong style="color:var(--tx1);">{{ row.ineff_score }}</strong>
+                <p style="color:var(--tx3); margin:2px 0 0; font-size:.78em;">/ 100점</p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- ─── 종합 비교 테이블 ─── -->
+      <div class="p-card" style="margin-bottom:24px;" data-aos="fade-up">
+        <p style="font-size:.82em; font-weight:700; color:var(--tx2); text-transform:uppercase; letter-spacing:.06em; margin-bottom:0;">시설별 MAC 종합 비교 — {{ sel_year }}년 {{ sel_month }}월 기준</p>
+        <div style="height:1px; background:var(--border); margin:14px 0;"></div>
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr>
+                <th>시설</th>
+                <th class="text-right">월 소각량 (ton)</th>
+                <th class="text-right">전력 (kWh/ton)</th>
+                <th class="text-right">LNG (Nm³/ton)</th>
+                <th class="text-right">비효율 점수</th>
+                <th class="text-right">MAC (원/tCO₂)</th>
+                <th class="text-right">시장가 (원)</th>
+                <th class="text-center">판단</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in rows %}
+              <tr>
+                <td style="font-weight:700;">{{ row.facility }}</td>
+                <td class="text-right">
+                  {{ row.monthly_incin }}
+                  <small style="color:var(--tx3); display:block; font-size:.78em;">{{ row.data_source }}</small>
+                </td>
+                <td class="text-right">{{ row.elec_per_ton }}</td>
+                <td class="text-right">{{ row.lng_per_ton }}</td>
+                <td class="text-right">{{ row.ineff_score }}</td>
+                <td class="text-right">
+                  <strong style="color:{% if row.is_sell %}var(--ok){% else %}var(--no){% endif %};">
+                    {{ row.mac }}
+                  </strong>
+                </td>
+                <td class="text-right" style="color:var(--warn); font-weight:700;">{{ carbon_price }}</td>
+                <td class="text-center">
+                  <span class="{% if row.is_sell %}badge-ok{% else %}badge-no{% endif %}" style="font-size:.73em; padding:3px 10px;">
+                    {{ row.decision }}
+                  </span>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 수식 설명 + 이동 버튼 -->
+      <p style="text-align:center; color:var(--tx3); font-size:.75em; margin-bottom:16px;">
+        MAC = {{ mac_max }}원 − 비효율점수 × ({{ mac_max }}원 − {{ mac_min }}원)
+        &nbsp;|&nbsp; 비효율점수 = 전력점수 × 0.5 + LNG점수 × 0.5
+        &nbsp;|&nbsp; {{ sel_year }}년 {{ sel_month }}월 기준
+      </p>
+      <div style="text-align:center;">
+        <a href="/predict_incoming/" class="btn btn-outline-success btn-sm">
+          반입량·소각량·CO₂ 예측과 함께 보기 →
+        </a>
+      </div>
+
+    </div>
+  </section>
+</main>
+
+{% include "footer.html" %}
+{% endblock %}

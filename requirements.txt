@@ -1,0 +1,14 @@
+# Web Framework
+Django==3.2.25
+
+# Database
+PyMySQL==1.0.2
+
+# Data Processing
+pandas==1.3.5
+numpy==1.21.6
+
+# Machine Learning
+xgboost==1.6.2
+scikit-learn==1.0.2
+joblib==1.3.2

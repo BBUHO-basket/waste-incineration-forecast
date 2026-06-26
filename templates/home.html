@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}서울 자원회수시설 탄소관리 플랫폼{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script src="{% static 'js/sha1.js' %}" type="text/javascript"></script>
+<script>
+  function getCookie(n){var v=null;if(document.cookie&&document.cookie!==''){var c=document.cookie.split(';');for(var i=0;i<c.length;i++){var k=c[i].trim();if(k.substring(0,n.length+1)===(n+'=')){v=decodeURIComponent(k.substring(n.length+1));break;}}}return v;}
+  function loginCheck(){
+    var id=document.getElementById('member_id').value;
+    var pw=document.getElementById('member_pwd').value;
+    if(!id){alert('아이디를 입력하세요.');return;}
+    if(!pw){alert('비밀번호를 입력하세요.');return;}
+    var xhr=new XMLHttpRequest();
+    xhr.onreadystatechange=function(){if(xhr.readyState==4){var o=JSON.parse(xhr.responseText);if(o.flag=='0'){location.href='/';}else{alert(o.result_msg);}}};
+    xhr.open('GET','member_login?member_id='+id+'&member_pwd='+hex_sha1(pw));
+    xhr.setRequestHeader('X-CSRFToken',getCookie('csrftoken'));
+    xhr.send(null);
+  }
+</script>
+{% endblock %}
+
+{% block styles %}
+{{ block.super }}
+<style>
+  .gh-hero {
+    background: var(--sf2);
+    min-height: 100vh;
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 120px 0 80px;
+    position: relative; overflow: hidden;
+  }
+  .gh-hero::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 4px;
+    background: linear-gradient(90deg, var(--g500), var(--g300));
+  }
+  .gh-inner { position: relative; z-index: 1; }
+  .gh-eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--g100); border: 1px solid var(--g200);
+    border-radius: 100px; padding: 6px 16px;
+    font-size: .75em; color: var(--g700); letter-spacing: .07em; text-transform: uppercase;
+    margin-bottom: 24px; font-weight: 700;
+  }
+  .gh-eyebrow span { width:6px; height:6px; border-radius:50%; background:var(--g500); display:inline-block; }
+  .gh-hero h1 {
+    font-size: clamp(2.2rem,5vw,3.6rem); font-weight: 900; color: var(--tx1);
+    line-height: 1.12; letter-spacing: -.03em; margin-bottom: 18px;
+  }
+  .gh-hero h1 em { font-style: normal; color: var(--g500); }
+  .gh-hero-sub { font-size: 1em; color: var(--tx2); line-height: 1.75; max-width: 460px; margin-bottom: 36px; }
+  .gh-login-box {
+    background: #fff; border: 1px solid var(--border);
+    border-radius: var(--r-xl); padding: 26px;
+    box-shadow: 0 4px 24px rgba(45,106,79,.07);
+  }
+  .gh-login-box .lbl { color: var(--tx2); font-size:.78em; font-weight:700; margin-bottom:12px; text-transform:uppercase; letter-spacing:.07em; }
+  .gh-login-box input {
+    background: var(--sf2); border: 1px solid var(--border);
+    color: var(--tx1); border-radius: var(--r-sm); padding: 12px 16px; font-size:.9em; width:100%;
+    margin-bottom: 10px; outline:none; font-family: var(--font); transition: border .2s;
+  }
+  .gh-login-box input:focus { border-color: var(--g500); box-shadow: 0 0 0 3px rgba(82,183,136,.12); }
+  .gh-login-box input::placeholder { color: var(--tx3); }
+  .gh-btn-prim {
+    display:inline-flex; align-items:center; gap:8px;
+    background:var(--g500); color:#fff; border:none; border-radius:50px;
+    padding:13px 28px; font-size:.9em; font-weight:800; cursor:pointer;
+    font-family:var(--font); transition:background .2s, transform .15s; text-decoration:none;
+  }
+  .gh-btn-prim:hover { background:var(--g700); color:#fff; transform:translateY(-1px); }
+  .gh-btn-ghost {
+    display:inline-flex; align-items:center; gap:8px;
+    background:transparent; color:var(--g700);
+    border:1px solid var(--g200); border-radius:50px;
+    padding:12px 24px; font-size:.9em; font-weight:700;
+    font-family:var(--font); transition:all .2s; text-decoration:none;
+  }
+  .gh-btn-ghost:hover { background:var(--g50); color:var(--g700); }
+  .gh-stat { background:#fff; border:1px solid var(--border); border-radius:var(--r-lg); padding:22px 18px; text-align:center; box-shadow:0 2px 10px rgba(45,106,79,.05); }
+  .gh-stat .num { font-size:1.8em; font-weight:900; color:var(--tx1); letter-spacing:-.03em; font-family:var(--font); }
+  .gh-stat .unit { font-size:.72em; color:var(--g500); margin-top:2px; font-weight:700; }
+  .gh-stat .desc { font-size:.7em; color:var(--tx3); margin-top:6px; }
+  /* 벤토 */
+  .bento-wrap { padding: 80px 0; background: #fff; }
+  .sec-label { font-size:.75em; font-weight:800; color:var(--g500); text-transform:uppercase; letter-spacing:.1em; margin-bottom:12px; }
+  .sec-title { font-size:clamp(1.7rem,3vw,2.4rem); font-weight:900; color:var(--tx1); line-height:1.2; letter-spacing:-.02em; margin-bottom:40px; }
+  .bc { background:#fff; border:1px solid var(--border); border-radius:var(--r-xl); padding:28px; position:relative; overflow:hidden; transition:transform .2s,box-shadow .2s; }
+  .bc:hover { transform:translateY(-3px); box-shadow:0 12px 40px rgba(45,106,79,.1); }
+  .bc.dark { background:var(--g900); border-color:#1a3d2b; }
+  .bc.accent { background:var(--g500); border-color:var(--g500); }
+  .bc .b-icon { width:46px; height:46px; border-radius:14px; background:rgba(82,183,136,.12); display:flex; align-items:center; justify-content:center; font-size:1.3em; margin-bottom:18px; }
+  .bc .b-tag { display:inline-block; background:rgba(82,183,136,.12); color:var(--g700); border-radius:50px; padding:3px 12px; font-size:.7em; font-weight:700; text-transform:uppercase; letter-spacing:.06em; margin-bottom:14px; }
+  .bc .b-title { font-size:1.15em; font-weight:800; color:var(--tx1); margin-bottom:8px; }
+  .bc .b-sub { font-size:.83em; color:var(--tx2); line-height:1.65; }
+  .bc.dark .b-title { color:#fff !important; }
+  .bc.dark .b-sub { color:rgba(255,255,255,.55) !important; }
+  .bc.dark .b-icon { background:rgba(255,255,255,.1); }
+  .bc.dark .b-tag { background:rgba(82,183,136,.2); color:var(--g300); }
+  .bc.accent .b-title { color:#fff !important; }
+  .bc.accent .b-sub { color:rgba(255,255,255,.7) !important; }
+  .bc .b-arrow { position:absolute; bottom:24px; right:24px; width:34px; height:34px; border-radius:50%; background:rgba(82,183,136,.15); display:flex; align-items:center; justify-content:center; color:var(--g700); font-size:.9em; text-decoration:none; transition:background .2s,transform .2s; }
+  .bc .b-arrow:hover { background:var(--g500); color:#fff; transform:translate(2px,-2px); }
+  .bc.dark .b-arrow { background:rgba(255,255,255,.1); color:#fff; }
+  .bc.dark .b-arrow:hover { background:var(--g500); }
+  .bc.accent .b-arrow { background:rgba(255,255,255,.2); color:#fff; }
+  .bento-grid { display:grid; gap:14px; }
+  .bento-3 { grid-template-columns:2fr 1fr 1fr; }
+  .bento-2 { grid-template-columns:1fr 1fr; }
+  /* KPI */
+  .kpi-section { padding:64px 0; background: #fff; }
+  .kpi-row { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:40px; }
+  .kpi-card { background:#fff; border:1px solid var(--border); border-radius:var(--r-lg); padding:26px 18px; }
+  .kpi-card .kl { font-size:.72em; color:var(--tx3); text-transform:uppercase; letter-spacing:.08em; font-weight:700; margin-bottom:10px; }
+  .kpi-card .kn { font-size:1.7em; font-weight:900; letter-spacing:-.03em; line-height:1; margin-bottom:4px; font-family:var(--font); }
+  .kpi-card .ks { font-size:.72em; color:var(--tx3); }
+  .cta-box { background:var(--g100); border:1px solid var(--g200); border-radius:var(--r-xl); padding:52px 40px; text-align:center; }
+  .cta-box h2 { color:var(--tx1); font-size:1.9em; font-weight:900; margin-bottom:10px; }
+  .cta-box p { color:var(--tx2); margin-bottom:28px; font-size:.95em; }
+  @media(max-width:768px){.bento-3,.bento-2{grid-template-columns:1fr;}.kpi-row{grid-template-columns:1fr 1fr;}}
+</style>
+{% endblock %}
+
+{% block body %}
+{% include "navbar.html" %}
+
+<!-- 히어로 -->
+<section class="gh-hero">
+  <div class="container gh-inner">
+    <div class="row align-items-center">
+      <div class="col-lg-6" style="padding-right:40px;">
+        <div class="gh-eyebrow"><span></span> 서울시 자원회수시설 운영 지원</div>
+        <h1>탄소 감축을<br><em>데이터로</em> 결정하다</h1>
+        <p class="gh-hero-sub">반입량 예측 · 소각량 계산 · CO₂ 배출 관리 · MAC 분석까지<br>강남·노원·마포·양천 자원회수시설 탄소관리 플랫폼</p>
+
+        {% if member_no == None %}
+        <div class="gh-login-box" style="max-width:400px;">
+          <p class="lbl">시설 운영자 로그인</p>
+          <input type="text" id="member_id" placeholder="아이디" onkeydown="if(event.key==='Enter')loginCheck();">
+          <input type="password" id="member_pwd" placeholder="비밀번호" onkeydown="if(event.key==='Enter')loginCheck();">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-top:4px;">
+            <button class="gh-btn-prim" onclick="loginCheck();">로그인 →</button>
+            <a href="/member_register" class="gh-btn-ghost">회원가입</a>
+          </div>
+        </div>
+        {% else %}
+        <div>
+          <p style="color:var(--g700); font-size:.85em; margin-bottom:16px; font-weight:600;">✅ {{ member_name }}님, 환영합니다</p>
+          <div style="display:flex; gap:12px; flex-wrap:wrap;">
+            <a href="/predict_incoming/" class="gh-btn-prim">📊 반입량 예측 →</a>
+            <a href="/mac/" class="gh-btn-ghost">💹 MAC 분석</a>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="col-lg-6">
+        <div class="row" style="margin:40px -6px 0;">
+          <div class="col-6" style="padding:6px;"><div class="gh-stat"><div class="num">635,373톤</div><div class="unit">연간 소각량 (2025)</div><div class="desc">4개 시설 합산</div></div></div>
+          <div class="col-6" style="padding:6px;"><div class="gh-stat"><div class="num">1.26M</div><div class="unit">tCO₂ 연간 허용량</div><div class="desc">서울시 2026년 기준</div></div></div>
+          <div class="col-6" style="padding:6px;"><div class="gh-stat"><div class="num">20,780</div><div class="unit">원 / tCO₂ 시장가</div><div class="desc">배출권 거래 기준</div></div></div>
+          <div class="col-6" style="padding:6px;"><div class="gh-stat"><div class="num">1.77</div><div class="unit">tCO₂/ton 배출계수</div><div class="desc">2024 국가 승인</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 벤토 기능 소개 -->
+<section class="bento-wrap">
+  <div class="container">
+    <p class="sec-label">주요 기능</p>
+    <h2 class="sec-title">예측에서 의사결정까지<br>원스톱으로</h2>
+    <div class="bento-grid bento-3" style="margin-bottom:14px;">
+      <div class="bc" style="grid-row:span 2; min-height:320px;">
+        <div class="b-icon">📦</div>
+        <div class="b-tag">XGBoost 예측 모델</div>
+        <h3 class="b-title">반입량 · 소각량 예측</h3>
+        <p class="b-sub">연도·월을 선택하면 4가지 지연 특성을 자동 계산해 반입량을 예측합니다. 과거 동월 소각비율 실데이터를 적용해 소각량까지 한번에 산출합니다.</p>
+        <div style="margin-top:20px; padding-top:16px; border-top:1px solid var(--border);">
+          <p style="font-size:.75em; color:var(--tx3); margin-bottom:6px;">예측 가능 범위</p>
+          <strong style="font-size:1em; color:var(--tx1);">2015 ~ 2035년 전 기간</strong>
+        </div>
+        <a href="/predict_incoming/" class="b-arrow">→</a>
+      </div>
+      <div class="bc dark">
+        <div class="b-icon">🌿</div>
+        <h3 class="b-title">CO₂ 배출량 산정</h3>
+        <p class="b-sub">국가 승인 배출계수(DM×CF×44/12)로 소각량을 tCO₂로 환산합니다.</p>
+        <a href="/predict_incoming/" class="b-arrow">→</a>
+      </div>
+      <div class="bc accent">
+        <div style="font-size:2.4em; font-weight:900; color:#fff; letter-spacing:-.04em; line-height:1; margin-bottom:10px;">÷ 12</div>
+        <h3 class="b-title">월 배출허용량 배분</h3>
+        <p class="b-sub">서울시 연간 허용량을 소각 비율로 배분하여 월 허용량을 계산합니다.</p>
+        <a href="/predict_incoming/" class="b-arrow">→</a>
+      </div>
+    </div>
+    <div class="bento-grid bento-2">
+      <div class="bc" style="min-height:190px;">
+        <div class="b-icon">💹</div>
+        <div class="b-tag">경제성 분석</div>
+        <h3 class="b-title">한계감축비용(MAC) 분석</h3>
+        <p class="b-sub">전력·LNG 효율 기반으로 시설별 MAC을 산출해 배출권 구매 vs 직접 감축을 판단합니다.</p>
+        <a href="/mac/" class="b-arrow">→</a>
+      </div>
+      <div class="bc" style="min-height:190px; background:#fafcfb;">
+        <div class="b-icon">📋</div>
+        <div class="b-tag">커뮤니티</div>
+        <h3 class="b-title">공지사항 · 커뮤니티 · Q&A</h3>
+        <p class="b-sub">관리자 공지, 운영자 간 자유 커뮤니티, Q&A 게시판을 운영합니다.</p>
+        <a href="/notice" class="b-arrow">→</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% if member_no %}
+<section class="kpi-section">
+  <div class="container">
+    <p class="sec-label">대시보드</p>
+    <h2 class="sec-title" style="margin-bottom:28px; font-size:2rem;">주요 현황 지표</h2>
+    <div class="kpi-row">
+      <div class="kpi-card"><div class="kl">자원회수시설</div><div class="kn" style="color:var(--g700);">4개</div><div class="ks">강남·노원·마포·양천</div></div>
+      <div class="kpi-card"><div class="kl">2025 연간 소각량</div><div class="kn" style="color:var(--ok);">635,373t</div><div class="ks">4개 시설 합산</div></div>
+      <div class="kpi-card"><div class="kl">2026 배출 허용량</div><div class="kn" style="color:var(--pur);">1,264,492</div><div class="ks">tCO₂ / 서울시 전체</div></div>
+      <div class="kpi-card"><div class="kl">배출권 시장가</div><div class="kn" style="color:var(--warn);">20,780</div><div class="ks">원 / tCO₂</div></div>
+    </div>
+    <div class="cta-box">
+      <h2>지금 바로 예측을 시작하세요</h2>
+      <p>시설을 선택하고 연도·월만 입력하면 반입량부터 탄소 경제성 판단까지 자동으로 분석됩니다.</p>
+      <div style="display:flex; justify-content:center; gap:14px; flex-wrap:wrap;">
+        <a href="/predict_incoming/" class="gh-btn-prim" style="font-size:1em; padding:14px 36px;">📊 반입량·CO₂ 예측 →</a>
+        <a href="/mac/" class="gh-btn-ghost" style="font-size:1em; padding:13px 32px; border-color:var(--g500);">💹 MAC 분석</a>
+      </div>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% include "footer.html" %}
+{% endblock %}
