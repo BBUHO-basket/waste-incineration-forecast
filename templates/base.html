@@ -253,6 +253,9 @@
     /* hr */
     hr { border-color: var(--border) !important; }
 
+    /* AOS fallback: JS 미실행 시에도 콘텐츠 표시 */
+    [data-aos]:not(.aos-animate) { opacity: 1 !important; transform: none !important; }
+
     /* 게시판 등 기타 페이지 메인 배경 */
     #main { background: var(--sf2); min-height: 60vh; }
 
